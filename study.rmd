@@ -1,6 +1,6 @@
 ---
 title: 'Case study: bike usage'
-ouput: pdf_document
+ouput: html_document
 ---
 ## Introduction
 This case study has the goal of better understanding the usage patterns of casual and annual members. With this, the company aims to attract more annual customers, which are more profitable to the Cyclistic. Therefore, the goal of the shareholders is to develop marketing strategies aimed to convert casual riders into annual members.
