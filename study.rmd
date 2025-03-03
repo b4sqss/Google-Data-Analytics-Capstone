@@ -1,0 +1,82 @@
+---
+title: 'Case study: bike usage'
+ouput: pdf_document
+---
+## Introduction
+This case study has the goal of better understanding the usage patterns of casual and annual members. With this, the company aims to attract more annual customers, which are more profitable to the Cyclistic. Therefore, the goal of the shareholders is to develop marketing strategies aimed to convert casual riders into annual members.
+
+## Ask
+In the process, some things must be addressed.
+* How annual and casual riders differ.
+* Why would casual riders buy memberships.
+## Prepare
+First we must gather all the data, which is done by getting it for each month.
+```{r load data}
+jul <- read.csv("202407-divvy-tripdata.csv")
+aug <- read.csv("202408-divvy-tripdata.csv")
+sep <- read.csv("202409-divvy-tripdata.csv")
+oct <- read.csv("202410-divvy-tripdata.csv")
+nov <- read.csv("202411-divvy-tripdata.csv")
+dec <- read.csv("202412-divvy-tripdata.csv")
+```
+
+The data comes from the csv files from divvy tripdata. Data from the last semester of 2024 was used.
+
+## Process
+First, all the data was united in using rbind.
+```{r creating a months dataframe}
+months <- rbind(jul, aug, sep, oct, nov, dec)
+```
+
+But we also need different collums so that the analysis can be more complete.
+
+```{r New columns}
+library(dplyr)
+library(lubridate)
+library(geosphere)
+library(tidyr)
+months_analysis <- mutate(months, trip_duration=(ymd_hms(ended_at) - ymd_hms(started_at)),  day_of_week=(wday(ymd_hms(started_at), label=TRUE)), ride_distance = distHaversine(cbind(start_lng, start_lat), cbind(end_lng, end_lat)), month_of_ride=(month(ymd_hms(started_at))))
+
+```
+
+Now we have the original data as well as the duration of trips, days on which they happened and distances. Now we should clean it
+
+```{r cleaning the data}
+months_analysis_clean <- months_analysis %>% drop_na() %>% distinct() %>% filter(month(ymd_hms(started_at)) > 6, ride_distance > 0, trip_duration > 0) %>% select(rideable_type, start_station_id, end_station_id, member_casual, trip_duration, day_of_week, ride_distance, month_of_ride)
+```
+
+## Analyze
+First, we will look for different numbers in which we can analyze the data.
+
+```{r Plotting the usage weekly}
+library(ggplot2)
+
+weekly_usage <- ggplot(data = months_analysis_clean) +
+    geom_bar(mapping = aes(x=day_of_week)) +
+    facet_wrap(~member_casual~month_of_ride)
+plot(weekly_usage)
+```
+
+```{r Plotting the duration of trips}
+duration_boxplot <- ggplot(data = months_analysis_clean) +
+    geom_boxplot(mapping = aes(x=member_casual, y=trip_duration)) +
+    coord_cartesian(ylim = c(0, 4000)) +
+    facet_wrap(~day_of_week)
+plot(duration_boxplot)
+```
+
+```{r Plotting the distance of trips}
+distance_boxplot <- ggplot(data = months_analysis_clean) +
+    geom_boxplot(mapping = aes(x=member_casual, y=ride_distance)) +
+    coord_cartesian(ylim = c(0, 3000))
+plot(distance_boxplot)
+```
+
+Given these plots, we can see some trends:
+1. The usage by casual member is mostly on the weekends, whilst members use it more during the weeks.
+2. The usage as a whole was reduced on the last members of the year possibly because of the weather.
+3. Casual members take trips for longer times.
+4. The distances of the trips are similar.
+5. Because the distances are similar whilst the duration are not, casual members may take more relaxed trips.
+
+It's possible that investing in media that show how casual members who take rides on the weekends could spend less money in case they got memberships, as this is the point in which the two groups differ the most.
